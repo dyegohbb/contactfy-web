@@ -21,15 +21,6 @@ Frontend da aplicação de Agendamento Telefônico **Contactfy**, desenvolvido e
 * Guards
 * Tailwind CSS
 
-## 🚧 Estrutura de diretórios
-
-```bash
-src/
-  app/
-  assets/
-  environments/
-```
-
 ## 📅 Requisitos
 
 * Node.js (recomendado: LTS)
