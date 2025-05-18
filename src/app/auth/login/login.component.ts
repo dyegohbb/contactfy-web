@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -14,12 +14,16 @@ export class LoginComponent {
   login = '';
   password = '';
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   async onSubmit() {
     try {
       const response = await this.authService.login(this.login, this.password);
-      console.log('Token JWT:', response.content.token);
+      const token = response.content.token;
+      this.authService.saveToken(token);
+
+      this.router.navigate(['/contatos']);
+
     } catch (error) {
       console.error('Erro ao fazer login:', error);
     }

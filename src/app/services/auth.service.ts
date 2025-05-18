@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 export class AuthService {
   private apiUrl = '/api';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   register(username: string, email: string, password: string) {
     const payload = {
@@ -38,5 +38,21 @@ export class AuthService {
     return firstValueFrom(
       this.http.post<any>(`${this.apiUrl}/auth`, payload, { headers })
     );
+  }
+
+  saveToken(token: string): void {
+    localStorage.setItem('contactfy_token', token);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('contactfy_token');
+  }
+
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
+  logout(): void {
+    localStorage.removeItem('contactfy_token');
   }
 }
