@@ -18,12 +18,18 @@ export class ContactListComponent {
   loading = false;
   hasNextPage = true;
   loadError = false;
+  isCreating = false;
 
   selectedContact?: Contact;
   isModalOpen = false;
   isEditing = false;
   isLoadingContact = false;
   originalContactJson: string = '';
+  showConfirmDialog = false;
+  confirmTitle = '';
+  confirmMessage = '';
+  private confirmCallback: () => void = () => { };
+
 
   showDropdown = false;
 
@@ -97,12 +103,21 @@ export class ContactListComponent {
     }
   }
 
-  deactivateContact(contact: Contact) {
+  async deactivateContact(contact: Contact) {
     if (!contact.active) return;
-    contact.active = false;
+
+    try {
+      await this.contactService.toggleActive(contact);
+      this.closeModal();
+      this.refreshList();
+    } catch (error) {
+      console.error('Erro ao favoritar/desfavoritar:', error);
+    }
+   
   }
 
   async viewContactDetails(contact: Contact) {
+    this.isCreating = false;
     this.isModalOpen = true;
     this.isEditing = false;
     this.isLoadingContact = true;
@@ -139,8 +154,33 @@ export class ContactListComponent {
   }
 
   createNewContact() {
-    console.log('Novo contato...');
+    this.selectedContact = {
+      identifier: '',
+      name: '',
+      email: '',
+      cellphone: '',
+      phone: '',
+      favorite: false,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+    this.isModalOpen = true;
+    this.isCreating = true;
+    this.isEditing = true;
   }
+
+  async addContact() {
+    if (!this.selectedContact) return;
+
+    try {
+      await this.contactService.createContact(this.selectedContact);
+      this.isModalOpen = false;
+      this.refreshList();
+    } catch (error) {
+      console.error('Erro ao criar contato:', error);
+    }
+  }
+
 
   closeModal() {
     let current = JSON.stringify(this.selectedContact);
@@ -160,5 +200,48 @@ export class ContactListComponent {
     localStorage.clear();
     this.router.navigate(['/login']);
   }
+
+  cancelEdit() {
+    this.isEditing = false;
+
+    if (this.isCreating) {
+      this.isModalOpen = false;
+    }
+  }
+
+  openConfirmDialog(title: string, message: string, onConfirm: () => void) {
+    this.confirmTitle = title;
+    this.confirmMessage = message;
+    this.confirmCallback = onConfirm;
+    this.showConfirmDialog = true;
+  }
   
+  cancelConfirm() {
+    this.showConfirmDialog = false;
+    this.confirmCallback = () => {};
+  }
+  
+  confirmAction() {
+    this.showConfirmDialog = false;
+    this.confirmCallback();
+    this.confirmCallback = () => {};
+  }
+  
+  confirmDeactivate(contact: Contact) {
+    this.openConfirmDialog(
+      'Confirmar desativação',
+      'Tem certeza que deseja desativar este contato?',
+      () => this.deactivateContact(contact)
+    );
+  }
+  
+  confirmUpdateContact() {
+    this.openConfirmDialog(
+      'Confirmar alteração',
+      'Deseja salvar as alterações deste contato?',
+      () => this.updateContact()
+    );
+  }
+  
+
 }

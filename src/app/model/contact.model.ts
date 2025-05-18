@@ -7,7 +7,7 @@ export interface Contact {
     favorite: boolean;
     active: boolean;
     createdAt: string;
-    userDTO: {
+    userDTO?: {
         identifier: string;
         username: string;
         email: string;

@@ -26,7 +26,8 @@ export class ContactService {
     const params = {
       page: page.toString(),
       size: size.toString(),
-      sort: 'name,asc' // <-- ordenando por nome
+      sort: 'name,asc',
+      active: true
     };
 
     return await firstValueFrom(
@@ -35,7 +36,7 @@ export class ContactService {
   }
 
   async toggleFavorite(contact: Contact) {
-    const token = this.auth.getToken(); // pegue seu token atual
+    const token = this.auth.getToken();
     if (!token) {
       console.error('Token JWT não encontrado');
       return;
@@ -93,4 +94,52 @@ export class ContactService {
       this.http.put(`${this.apiUrl}/contact/${contact.identifier}`, payload, { headers })
     );
   }
+
+  async createContact(contact: Partial<Contact>): Promise<void> {
+    const token = this.auth.getToken();
+    if (!token) throw new Error('Token não encontrado');
+  
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Accept-Language': 'pt-br',
+      'Content-Type': 'application/json'
+    });
+  
+    const payload = {
+      name: contact.name,
+      email: contact.email,
+      cellphone: contact.cellphone,
+      phone: contact.phone,
+      favorite: contact.favorite ?? false,
+      active: true
+    };
+  
+    await firstValueFrom(
+      this.http.post(`${this.apiUrl}/contact`, payload, { headers })
+    );
+  }
+  
+  async toggleActive(contact: Contact) {
+    const token = this.auth.getToken();
+    if (!token) {
+      console.error('Token JWT não encontrado');
+      return;
+    }
+  
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Accept-Language': 'pt-br'
+    });
+  
+    const endpoint = contact.active
+      ? `${this.apiUrl}/contact/inactivate/${contact.identifier}`
+      : `${this.apiUrl}/contact/activate/${contact.identifier}`;
+  
+    try {
+      await firstValueFrom(this.http.patch(endpoint, null, { headers }));
+      contact.active = !contact.active;
+    } catch (error) {
+      console.error('Erro ao atualizar ativo/inativo:', error);
+    }
+  }  
 }

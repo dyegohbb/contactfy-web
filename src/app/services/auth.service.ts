@@ -55,4 +55,9 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('contactfy_token');
   }
+
+  clearToken(): void {
+    localStorage.removeItem('token');
+  }
+  
 }
