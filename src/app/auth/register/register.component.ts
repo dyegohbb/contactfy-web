@@ -20,7 +20,6 @@ export class RegisterComponent {
   async onSubmit() {
     try {
       const result = await this.authService.register(this.username, this.email, this.password);
-      console.log('Cadastro realizado:', result);
     } catch (error) {
       console.error('Erro ao cadastrar:', error);
     }

@@ -14,6 +14,17 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-3xl font-semibold">Contatos</h2>
             <div class="flex space-x-2">
+                <button (click)="toggleFilters()"
+                    [ngClass]="{'bg-neutral-700 text-white': showFilters,'bg-white text-neutral-900 hover:bg-neutral-200': !showFilters}"
+                    class="cursor-pointer p-2 rounded-lg shadow transition" title="Filtros">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                    </svg>
+                </button>
+
+
                 <button (click)="refreshList()"
                     class="cursor-pointer bg-white p-2 text-neutral-900 rounded-lg shadow hover:bg-neutral-200 transition"
                     title="Atualizar">
@@ -37,6 +48,69 @@
 
         </div>
 
+        <div *ngIf="showFilters" class="mb-6 bg-neutral-800 p-4 rounded-lg">
+            <div class="mb-6 bg-neutral-800 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-4">Filtros</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm mb-1">Nome</label>
+                        <input type="text" [(ngModel)]="filters.name"
+                            class="w-full px-4 py-2 rounded bg-neutral-900 text-white border border-neutral-700" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm mb-1">Email</label>
+                        <input type="text" [(ngModel)]="filters.email"
+                            class="w-full px-4 py-2 rounded bg-neutral-900 text-white border border-neutral-700" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm mb-1">Celular</label>
+                        <input type="text" [(ngModel)]="filters.cellphone"
+                            class="w-full px-4 py-2 rounded bg-neutral-900 text-white border border-neutral-700" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm mb-1">Telefone</label>
+                        <input type="text" [(ngModel)]="filters.phone"
+                            class="w-full px-4 py-2 rounded bg-neutral-900 text-white border border-neutral-700" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm mb-1">Favorito</label>
+                        <select [(ngModel)]="filters.favorite"
+                            class="w-full px-4 py-2 rounded bg-neutral-900 text-white border border-neutral-700">
+                            <option [ngValue]="null">Todos</option>
+                            <option [ngValue]="true">Sim</option>
+                            <option [ngValue]="false">Não</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm mb-1">Ativo</label>
+                        <select [(ngModel)]="filters.active"
+                            class="w-full px-4 py-2 rounded bg-neutral-900 text-white border border-neutral-700">
+                            <option [ngValue]="null">Todos</option>
+                            <option [ngValue]="true">Sim</option>
+                            <option [ngValue]="false">Não</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4 flex gap-2 justify-end">
+                    <button (click)="refreshList()"
+                        class="bg-white text-neutral-900 px-4 py-2 rounded shadow hover:bg-neutral-200">
+                        Aplicar
+                    </button>
+                    <button (click)="clearFilters()"
+                        class="bg-neutral-600 text-white px-4 py-2 rounded shadow hover:bg-neutral-500">
+                        Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+
         <ul class="divide-y divide-neutral-800">
             <div *ngIf="loadError" class="text-red-400 text-center mt-4">
                 Erro ao carregar contatos. Tente novamente.
@@ -51,17 +125,16 @@
                     </div>
 
                     <div class="flex items-center space-x-3">
-                        <button (click)="toggleFavorite(contact)" class="cursor-pointer">
+                        <button (click)="contact.active && toggleFavorite(contact)" class="cursor-pointer"
+                            [attr.title]="!contact.active ? 'Você não pode favoritar um contato inativo.' : 'Favoritar contato'">
                             <svg *ngIf="!contact.favorite" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                class="w-6 h-6 text-neutral-500 hover:text-yellow-400 transition">
+                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" [ngClass]="{'w-6 h-6 transition': true,'text-neutral-400 cursor-not-allowed opacity-40': !contact.active,'text-neutral-500 hover:text-yellow-400': contact.active}">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M11.48 3.499a.562.562 0 011.04 0l2.091 5.136a.563.563 0 00.475.348l5.453.49c.51.046.716.693.325 1.05l-4.14 3.639a.562.562 0 00-.18.557l1.285 5.385c.118.495-.408.884-.838.63l-4.722-2.784a.563.563 0 00-.57 0l-4.722 2.784c-.43.254-.956-.135-.838-.63l1.285-5.386a.562.562 0 00-.18-.557L2.136 10.52c-.39-.357-.184-1.004.325-1.05l5.453-.49a.563.563 0 00.475-.348l2.09-5.136z" />
                             </svg>
 
                             <svg *ngIf="contact.favorite" xmlns="http://www.w3.org/2000/svg" fill="yellow"
-                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                class="w-6 h-6 text-yellow-400">
+                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" [ngClass]="{'w-6 h-6 text-yellow-400 transition': true,'opacity-40 cursor-not-allowed': !contact.active}">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M11.48 3.499a.562.562 0 011.04 0l2.091 5.136a.563.563 0 00.475.348l5.453.49c.51.046.716.693.325 1.05l-4.14 3.639a.562.562 0 00-.18.557l1.285 5.385c.118.495-.408.884-.838.63l-4.722-2.784a.563.563 0 00-.57 0l-4.722 2.784c-.43.254-.956-.135-.838-.63l1.285-5.386a.562.562 0 00-.18-.557L2.136 10.52c-.39-.357-.184-1.004.325-1.05l5.453-.49a.563.563 0 00.475-.348l2.09-5.136z" />
                             </svg>
@@ -86,9 +159,15 @@
         <div class="text-center text-neutral-500 mt-4" *ngIf="loading">
             Carregando...
         </div>
-        <div class="text-center text-neutral-500 mt-4" *ngIf="!hasNextPage && !loading">
+        <div class="text-center text-neutral-500 mt-4" *ngIf="!loading && contacts.length === 0">
+            Nenhum contato encontrado.
+        </div>
+
+        <div class="text-center text-neutral-500 mt-4" *ngIf="!loading && contacts.length > 0 && !hasNextPage">
             Todos os contatos carregados.
         </div>
+
+
     </div>
 </div>
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom } from 'rxjs';
 import { ApiResponse } from '../model/apiResponse.model';
 import { Contact } from '../model/contact.model';
 
@@ -13,7 +13,13 @@ export class ContactService {
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 
-  async getContacts(page = 0, size = 10): Promise<ApiResponse<Contact[]>> {
+  async getContacts(
+    page = 0,
+    size = 10,
+    filters: any = {},
+    sort: string = 'name',
+    direction: 'asc' | 'desc' = 'asc'
+  ): Promise<ApiResponse<Contact[]>> {
     const token = this.auth.getToken();
     if (!token) throw new Error('Token não encontrado');
 
@@ -23,13 +29,23 @@ export class ContactService {
       'Content-Type': 'application/json'
     });
 
-    const params = {
+    const rawParams: any = {
       page: page.toString(),
       size: size.toString(),
-      sort: 'name,asc',
-      active: true
+      sort: `${sort},${direction}`,
+      ...filters
     };
-
+    
+    const params: Record<string, string> = Object.fromEntries(
+      Object.entries(rawParams)
+        .filter(([_, value]) =>
+          value !== null &&
+          value !== undefined &&
+          !(typeof value === 'string' && value.trim() === '')
+        )
+        .map(([key, value]) => [key, String(value)])
+    );
+    
     return await firstValueFrom(
       this.http.get<ApiResponse<Contact[]>>(`${this.apiUrl}/contact`, { headers, params })
     );
@@ -98,13 +114,13 @@ export class ContactService {
   async createContact(contact: Partial<Contact>): Promise<void> {
     const token = this.auth.getToken();
     if (!token) throw new Error('Token não encontrado');
-  
+
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Accept-Language': 'pt-br',
       'Content-Type': 'application/json'
     });
-  
+
     const payload = {
       name: contact.name,
       email: contact.email,
@@ -113,33 +129,33 @@ export class ContactService {
       favorite: contact.favorite ?? false,
       active: true
     };
-  
+
     await firstValueFrom(
       this.http.post(`${this.apiUrl}/contact`, payload, { headers })
     );
   }
-  
+
   async toggleActive(contact: Contact) {
     const token = this.auth.getToken();
     if (!token) {
       console.error('Token JWT não encontrado');
       return;
     }
-  
+
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Accept-Language': 'pt-br'
     });
-  
+
     const endpoint = contact.active
       ? `${this.apiUrl}/contact/inactivate/${contact.identifier}`
       : `${this.apiUrl}/contact/activate/${contact.identifier}`;
-  
+
     try {
       await firstValueFrom(this.http.patch(endpoint, null, { headers }));
       contact.active = !contact.active;
     } catch (error) {
       console.error('Erro ao atualizar ativo/inativo:', error);
     }
-  }  
+  }
 }

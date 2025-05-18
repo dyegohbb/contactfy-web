@@ -28,6 +28,23 @@ export class ContactListComponent {
   showConfirmDialog = false;
   confirmTitle = '';
   confirmMessage = '';
+  showFilters = false;
+
+  filters: any = {
+    identifier: null,
+    name: null,
+    email: null,
+    cellphone: null,
+    phone: null,
+    favorite: null,
+    active: true,
+    createdAfter: null,
+    createdBefore: null
+  };
+  
+  sort: string = 'name';
+  direction: 'asc' | 'desc' = 'asc';
+
   private confirmCallback: () => void = () => { };
 
 
@@ -36,7 +53,8 @@ export class ContactListComponent {
   constructor(private contactService: ContactService, private router: Router) { }
 
   ngOnInit(): void {
-    this.refreshList();
+    this.loadContacts();
+    this.loadUntilScrollable();
   }
 
   refreshList() {
@@ -51,7 +69,7 @@ export class ContactListComponent {
 
     while ((this.hasNextPage && !this.isScrollable()) || (force && firstLoop)) {
       try {
-        await this.loadContacts();
+        await this.loadContacts(force);
       } catch (error) {
         console.error('Erro ao carregar contatos:', error);
         this.loadError = true;
@@ -67,21 +85,63 @@ export class ContactListComponent {
     return document.body.scrollHeight > window.innerHeight;
   }
 
-  async loadContacts() {
-    if (this.loading || !this.hasNextPage) return;
-
+  async loadContacts(ignoreNextPage = false) {
+    if ((this.loading || !this.hasNextPage) && !ignoreNextPage) return;
+  
     this.loading = true;
-
+  
     try {
-      let response = await this.contactService.getContacts(this.page, this.size);
-      this.contacts = [...this.contacts, ...response.content || []];
-      this.hasNextPage = response.hasNextPage || false;
+      
+      let response = await this.contactService.getContacts(
+        this.page,
+        this.size,
+        this.filters,
+        this.sort,
+        this.direction
+      );
+  
+      if(response != null){
+        this.contacts = [...this.contacts, ...response.content || []];
+        this.hasNextPage = response.hasNextPage || false;
+      } else {
+        this.hasNextPage = false;
+      }
+
       this.page++;
     } catch (error) {
       console.error('Erro ao carregar contatos:', error);
     }
-
     this.loading = false;
+  
+  }  
+
+  clearFilters() {
+    this.filters = {
+      identifier: null,
+      name: null,
+      email: null,
+      cellphone: null,
+      phone: null,
+      favorite: null,
+      active: true,
+      createdAfter: null,
+      createdBefore: null
+    };
+    this.sort = 'name';
+    this.direction = 'asc';
+    this.hasNextPage = true;
+    this.refreshList();
+  }
+
+  toggleSort(field: string) {
+    if (this.sort === field) {
+      this.direction = this.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sort = field;
+      this.direction = 'asc';
+    }
+  
+    this.refreshList();
   }
 
   @HostListener('window:scroll', [])
@@ -241,6 +301,10 @@ export class ContactListComponent {
       'Deseja salvar as alterações deste contato?',
       () => this.updateContact()
     );
+  }
+
+  toggleFilters() {
+    this.showFilters = !this.showFilters;
   }
   
 
